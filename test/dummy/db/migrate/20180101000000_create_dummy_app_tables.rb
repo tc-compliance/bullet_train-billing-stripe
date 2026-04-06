@@ -14,13 +14,6 @@ class CreateDummyAppTables < ActiveRecord::Migration[6.1]
       t.timestamps
     end
 
-    create_table :billing_included_prices do |t|
-      t.references :subscription, foreign_key: {to_table: :billing_subscriptions}
-      t.references :price, foreign_key: {to_table: :billing_prices}
-      t.integer :quantity, default: 1
-      t.timestamps
-    end
-
     create_table :billing_products do |t|
       t.string :name
       t.timestamps
@@ -31,6 +24,13 @@ class CreateDummyAppTables < ActiveRecord::Migration[6.1]
       t.string :stripe_price_id
       t.integer :trial_days
       t.boolean :allow_promotion_codes, default: false
+      t.timestamps
+    end
+
+    create_table :billing_included_prices do |t|
+      t.references :subscription, foreign_key: {to_table: :billing_subscriptions}
+      t.references :price, foreign_key: {to_table: :billing_prices}
+      t.integer :quantity, default: 1
       t.timestamps
     end
   end
