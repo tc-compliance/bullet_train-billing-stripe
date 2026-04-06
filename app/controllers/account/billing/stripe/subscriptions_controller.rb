@@ -8,7 +8,7 @@ class Account::Billing::Stripe::SubscriptionsController < Account::ApplicationCo
     allow_promotion_codes = @subscription.generic_subscription.included_prices.map { |ip| ip.price.allow_promotion_codes }.compact.any?
     customer_auto_update_attributes =
       if @team.stripe_customer_id
-        { customer_update: { name: "auto", address: "auto" } }
+        {customer_update: {name: "auto", address: "auto"}}
       else
         {}
       end
@@ -17,15 +17,15 @@ class Account::Billing::Stripe::SubscriptionsController < Account::ApplicationCo
       payment_method_types: ["card"],
       subscription_data: {
         items: @subscription.stripe_items,
-        trial_settings: {end_behavior: {missing_payment_method: 'cancel'}},
+        trial_settings: {end_behavior: {missing_payment_method: "cancel"}}
       }.merge(trial_days ? {trial_period_days: trial_days} : {}),
       customer: @team.stripe_customer_id,
       client_reference_id: @subscription.id,
       success_url: CGI.unescape(url_for([:refresh, :account, @subscription, session_id: "{CHECKOUT_SESSION_ID}"])),
       cancel_url: url_for([:account, @subscription.generic_subscription]),
       allow_promotion_codes: allow_promotion_codes,
-      payment_method_collection: 'if_required',
-      tax_id_collection: { enabled: true },
+      payment_method_collection: "if_required",
+      tax_id_collection: {enabled: true},
       **customer_auto_update_attributes
     }
 
