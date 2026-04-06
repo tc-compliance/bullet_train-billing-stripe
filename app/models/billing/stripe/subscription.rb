@@ -33,9 +33,9 @@ class Billing::Stripe::Subscription < ApplicationRecord
 
       # See if we're already including a matching price locally.
       price = Billing::Stripe::PriceAdapter.find_by_stripe_price_id(stripe_price_id)
-      included_price = generic_subscription.included_prices.find_or_create_by(price_id: price.id) do |ip|
-        ip.quantity = subscription_item.dig("quantity")
-      end
+      included_price = generic_subscription.included_prices.find_or_initialize_by(price_id: price.id)
+      included_price.quantity = subscription_item.dig("quantity")
+      included_price.save! if included_price.changed?
 
       remaining_included_price_ids << included_price.id
     end
