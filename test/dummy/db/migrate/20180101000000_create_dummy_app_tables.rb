@@ -16,7 +16,7 @@ class CreateDummyAppTables < ActiveRecord::Migration[6.1]
 
     create_table :billing_included_prices do |t|
       t.references :subscription, foreign_key: {to_table: :billing_subscriptions}
-      t.integer :price_id
+      t.references :price, foreign_key: {to_table: :billing_prices}
       t.integer :quantity, default: 1
       t.timestamps
     end
