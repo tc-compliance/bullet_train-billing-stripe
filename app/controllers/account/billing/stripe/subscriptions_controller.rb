@@ -33,9 +33,11 @@ class Account::Billing::Stripe::SubscriptionsController < Account::ApplicationCo
       session_attributes[:customer_email] = current_membership.email
     end
 
-    # Stripe requires that Checkout Sessions having different attributes must
-    # have different idempotency keys, so include the updated_at in the key.
-    idempotency_key = "#{t("application.name")}:subscription:#{@subscription.id}:#{@subscription.updated_at.to_i}"
+    idempotency_key = self.class.build_checkout_idempotency_key(
+      app_name: t("application.name"),
+      subscription_id: @subscription.id,
+      session_attributes: session_attributes
+    )
 
     session = Stripe::Checkout::Session.create(session_attributes, idempotency_key: idempotency_key)
 
@@ -61,5 +63,29 @@ class Account::Billing::Stripe::SubscriptionsController < Account::ApplicationCo
     @subscription.refresh_from_checkout_session(checkout_session)
 
     redirect_to [:account, @subscription.generic_subscription.team], notice: t("billing/stripe/subscriptions.notifications.refreshed")
+  end
+
+  # Generates a deterministic idempotency key from the actual Stripe Checkout
+  # Session attributes. This ensures the key changes whenever any parameter
+  # changes (e.g. team gains a stripe_customer_id between attempts) and stays
+  # stable for truly identical requests.
+  #
+  # Extracted as a class method so it can be unit-tested without a full
+  # controller stack.
+  def self.build_checkout_idempotency_key(app_name:, subscription_id:, session_attributes:)
+    canonical = deep_sort_keys(session_attributes.as_json)
+    fingerprint = Digest::SHA256.hexdigest(JSON.generate(canonical))[0, 32]
+    "#{app_name}:subscription:#{subscription_id}:#{fingerprint}"
+  end
+
+  def self.deep_sort_keys(obj)
+    case obj
+    when Hash
+      obj.sort_by { |k, _| k.to_s }.map { |k, v| [k, deep_sort_keys(v)] }.to_h
+    when Array
+      obj.map { |v| deep_sort_keys(v) }
+    else
+      obj
+    end
   end
 end
