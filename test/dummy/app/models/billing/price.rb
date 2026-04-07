@@ -1,5 +1,6 @@
 class Billing::Price < ApplicationRecord
   self.table_name = "billing_prices"
+  belongs_to :product, class_name: "Billing::Product"
 
   def trial_days
     self[:trial_days]
